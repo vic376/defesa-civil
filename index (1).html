@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defesa Civil — Sistema de Alerta</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #canvas-container {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  /* HUD superior */
+  #hud {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 32px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+  }
+
+  #logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #logo .shield {
+    width: 28px; height: 28px;
+    background: #e63946;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+
+  #status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    transition: all 0.5s ease;
+    background: rgba(255,255,255,0.08);
+    color: #aaa;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  #status-badge.normal { background: rgba(34,197,94,0.15); color: #22c55e; border-color: rgba(34,197,94,0.3); }
+  #status-badge.alert  { background: rgba(230,57,70,0.2);  color: #e63946; border-color: rgba(230,57,70,0.5); animation: pulse-badge 1s infinite; }
+
+  @keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.4); }
+    50%       { box-shadow: 0 0 0 8px rgba(230,57,70,0); }
+  }
+
+  #dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Painel de alerta */
+  #alert-panel {
+    position: fixed;
+    bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    z-index: 10;
+    background: linear-gradient(135deg, #1a0a0a, #2d0f0f);
+    border: 1px solid rgba(230,57,70,0.4);
+    border-radius: 16px;
+    padding: 20px 32px;
+    text-align: center;
+    min-width: 380px;
+    box-shadow: 0 0 40px rgba(230,57,70,0.2), 0 20px 60px rgba(0,0,0,0.5);
+    transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  #alert-panel.visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  #alert-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 3px;
+    color: #e63946;
+    margin-bottom: 4px;
+  }
+
+  #alert-temp {
+    font-size: 48px;
+    font-weight: 300;
+    color: #fff;
+    line-height: 1;
+    margin: 8px 0;
+  }
+
+  #alert-temp span { font-size: 20px; color: #aaa; }
+
+  #alert-msg {
+    font-size: 12px;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* Ações ativadas */
+  #actions {
+    position: fixed;
+    right: 28px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .action-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+    opacity: 0.3;
+    transition: all 0.5s ease;
+  }
+
+  .action-card.active {
+    opacity: 1;
+    background: rgba(34,197,94,0.08);
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .action-icon {
+    font-size: 22px;
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.5s;
+  }
+
+  .action-card.active .action-icon {
+    background: rgba(34,197,94,0.15);
+  }
+
+  .action-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+  .action-value { font-size: 14px; color: #fff; font-weight: 600; margin-top: 2px; }
+  .action-card.active .action-label { color: #22c55e; }
+
+  /* Overlay de alerta vermelho */
+  #alert-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(230,57,70,0.15) 100%);
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #alert-overlay.visible { opacity: 1; }
+
+  /* Temperatura no canto */
+  #temp-display {
+    position: fixed;
+    left: 28px; top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+  }
+
+  #temp-big {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    line-height: 1;
+    color: #fff;
+    transition: color 0.5s;
+  }
+  #temp-big.hot { color: #e63946; }
+  #temp-unit { font-size: 28px; color: #555; }
+  #temp-label { font-size: 11px; color: #444; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+  /* Botão de simulação (para apresentação) */
+  #sim-btn {
+    position: fixed;
+    bottom: 32px; right: 28px;
+    z-index: 20;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #888;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  #sim-btn:hover { background: rgba(230,57,70,0.15); border-color: rgba(230,57,70,0.4); color: #e63946; }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<div id="alert-overlay"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="logo">
+    <div class="shield">🛡</div>
+    DEFESA CIVIL — SISTEMA DE ALERTA
+  </div>
+  <div id="status-badge">
+    <div id="dot"></div>
+    <span id="status-text">MONITORANDO</span>
+  </div>
+</div>
+
+<!-- Temperatura -->
+<div id="temp-display">
+  <div id="temp-big">--<span id="temp-unit">°C</span></div>
+  <div id="temp-label">Temperatura</div>
+  <div id="temp-label" style="font-size:10px;color:#333;margin-top:2px;">Umidade: <span id="umid-val">--%</span></div>
+</div>
+
+<!-- Ações -->
+<div id="actions">
+  <div class="action-card" id="ac-card">
+    <div class="action-icon">❄️</div>
+    <div>
+      <div class="action-label">Ar-condicionado</div>
+      <div class="action-value" id="ac-status">Desligado</div>
+    </div>
+  </div>
+  <div class="action-card" id="win-card">
+    <div class="action-icon">🪟</div>
+    <div>
+      <div class="action-label">Janelas / Cortinas</div>
+      <div class="action-value" id="win-status">Abertas</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Painel de alerta -->
+<div id="alert-panel">
+  <div id="alert-title">⚠ ALERTA DE CALOR</div>
+  <div id="alert-temp">--<span>°C</span></div>
+  <div id="alert-msg">Feche janelas e ligue o ar-condicionado</div>
+</div>
+
+<!-- Botão de simulação manual -->
+<button id="sim-btn" onclick="triggerAlert(42.5, 85)">▶ SIMULAR ALERTA</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===================== THREE.JS SCENE =====================
+const container = document.getElementById('canvas-container');
+const W = window.innerWidth, H = window.innerHeight;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(W, H);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+scene.fog = new THREE.Fog(0x1a1a2e, 15, 30);
+
+const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 100);
+camera.position.set(0, 2.5, 8);
+camera.lookAt(0, 2.5, 0);
+
+// ===================== LUZES =====================
+const ambientLight = new THREE.AmbientLight(0xffeedd, 0.4);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xffd580, 1.2);
+sunLight.position.set(3, 8, 3);
+sunLight.castShadow = true;
+scene.add(sunLight);
+
+const pointLight = new THREE.PointLight(0xff6b35, 0.6, 10);
+pointLight.position.set(-2, 3, 2);
+scene.add(pointLight);
+
+// Luz do AC (começa apagada, azul)
+const acLight = new THREE.PointLight(0x00cfff, 0, 5);
+acLight.position.set(0, 3.5, -3.5);
+scene.add(acLight);
+
+// ===================== HELPERS =====================
+function box(w, h, d, color, x, y, z, rx=0, ry=0, rz=0) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshLambertMaterial({ color });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y, z);
+  mesh.rotation.set(rx, ry, rz);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  return mesh;
+}
+
+// ===================== SALA =====================
+// Chão
+const floorGeo = new THREE.PlaneGeometry(12, 10);
+const floorMat = new THREE.MeshLambertMaterial({ color: 0x8b6f4e });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Tapete
+const rugGeo = new THREE.PlaneGeometry(5, 3);
+const rugMat = new THREE.MeshLambertMaterial({ color: 0x6b3a4f });
+const rug = new THREE.Mesh(rugGeo, rugMat);
+rug.rotation.x = -Math.PI / 2;
+rug.position.set(0, 0.01, 1.5);
+scene.add(rug);
+
+// Parede fundos
+const wallBack = box(12, 7, 0.2, 0xf0e6d3, 0, 3.5, -4.9);
+// Paredes laterais
+box(0.2, 7, 10, 0xe8dcc8, -6, 3.5, 0);
+box(0.2, 7, 10, 0xe8dcc8,  6, 3.5, 0);
+// Teto
+const ceiling = box(12, 0.2, 10, 0xddd0ba, 0, 7, 0);
+
+// Rodapé
+box(12, 0.15, 0.15, 0xc4a882, 0, 0.07, -4.82);
+
+// ===================== JANELA =====================
+// Moldura
+box(3.2, 2.2, 0.1, 0x8b6914, 0, 2.8, -4.82); // fundo moldura
+box(3.0, 2.0, 0.15, 0x87ceeb, 0, 2.8, -4.75); // vidro (azul claro)
+
+// Divisor da janela
+box(0.08, 2.0, 0.18, 0x8b6914, 0, 2.8, -4.73);
+box(3.0, 0.08, 0.18, 0x8b6914, 0, 2.8, -4.73);
+
+// Moldura externa
+box(3.4, 0.12, 0.2, 0x8b6914, 0, 3.95, -4.78); // topo
+box(3.4, 0.12, 0.2, 0x8b6914, 0, 1.7, -4.78); // base
+box(0.12, 2.4, 0.2, 0x8b6914, -1.65, 2.8, -4.78); // lado esq
+box(0.12, 2.4, 0.2, 0x8b6914,  1.65, 2.8, -4.78); // lado dir
+
+// Varão das cortinas
+box(3.8, 0.07, 0.07, 0xb8960c, 0, 4.1, -4.55);
+
+// ===================== AR-CONDICIONADO =====================
+// Corpo principal — branco, bem visível ACIMA da janela
+const acBody = box(2.8, 0.6, 0.45, 0xe8e8e8, 0, 4.8, -4.6);
+// Frente do AC (painel frontal)
+box(2.6, 0.45, 0.05, 0xffffff, 0, 4.8, -4.37);
+// Grade de saída de ar (listras azuis quando ligado)
+for (let i = -1.1; i <= 1.1; i += 0.22) {
+  box(0.03, 0.28, 0.06, 0xcccccc, i, 4.72, -4.35);
+}
+// Aba defletora (horizontal)
+box(2.4, 0.06, 0.18, 0xdddddd, 0, 4.58, -4.36);
+
+// LED do AC — verde grande e visível
+const acLedGeo = new THREE.BoxGeometry(0.12, 0.12, 0.04);
+const acLedMat = new THREE.MeshLambertMaterial({ color: 0xff3333, emissive: 0x660000 });
+const acLed = new THREE.Mesh(acLedGeo, acLedMat);
+acLed.position.set(-1.1, 4.85, -4.33);
+scene.add(acLed);
+
+// Display do AC
+box(0.5, 0.18, 0.03, 0x111111, 0.3, 4.85, -4.33);
+
+// Etiqueta AC
+box(0.4, 0.1, 0.02, 0xaaaaaa, -0.4, 4.72, -4.33);
+
+// ===================== CORTINAS =====================
+// Cortina esquerda — começa recolhida nas laterais (abertas)
+const curtainGeoL = new THREE.BoxGeometry(0.45, 2.3, 0.06);
+const curtainMatL = new THREE.MeshLambertMaterial({ color: 0xc0392b, side: THREE.DoubleSide });
+const curtainL = new THREE.Mesh(curtainGeoL, curtainMatL);
+curtainL.position.set(-1.55, 2.85, -4.6);  // encostada na lateral esquerda
+curtainL.castShadow = true;
+scene.add(curtainL);
+
+const curtainGeoR = new THREE.BoxGeometry(0.45, 2.3, 0.06);
+const curtainMatR = new THREE.MeshLambertMaterial({ color: 0xc0392b, side: THREE.DoubleSide });
+const curtainR = new THREE.Mesh(curtainGeoR, curtainMatR);
+curtainR.position.set(1.55, 2.85, -4.6);   // encostada na lateral direita
+curtainR.castShadow = true;
+scene.add(curtainR);
+
+// ===================== SOFÁ =====================
+// Base do sofá
+box(3.5, 0.4, 1.2, 0x4a6fa5, 0, 0.2, 2.5);
+// Assento
+box(3.5, 0.15, 1.0, 0x5a7fb5, 0, 0.475, 2.5);
+// Encosto
+box(3.5, 0.8, 0.2, 0x4a6fa5, 0, 0.8, 3.05);
+// Braços
+box(0.2, 0.6, 1.2, 0x3d5a8a, -1.75, 0.5, 2.5);
+box(0.2, 0.6, 1.2, 0x3d5a8a,  1.75, 0.5, 2.5);
+// Almofadas
+box(1.3, 0.25, 0.7, 0x7a9fd0, -0.9, 0.6, 2.6);
+box(1.3, 0.25, 0.7, 0x7a9fd0,  0.9, 0.6, 2.6);
+// Pernas
+box(0.1, 0.15, 0.1, 0x2c3e6e, -1.6, 0.07, 2.0);
+box(0.1, 0.15, 0.1, 0x2c3e6e,  1.6, 0.07, 2.0);
+box(0.1, 0.15, 0.1, 0x2c3e6e, -1.6, 0.07, 3.0);
+box(0.1, 0.15, 0.1, 0x2c3e6e,  1.6, 0.07, 3.0);
+
+// ===================== MESA DE CENTRO =====================
+box(1.4, 0.08, 0.7, 0x6b4423, 0, 0.55, 1.3);
+box(0.06, 0.5, 0.06, 0x5a3a1a, -0.6, 0.27, 1.0);
+box(0.06, 0.5, 0.06, 0x5a3a1a,  0.6, 0.27, 1.0);
+box(0.06, 0.5, 0.06, 0x5a3a1a, -0.6, 0.27, 1.6);
+box(0.06, 0.5, 0.06, 0x5a3a1a,  0.6, 0.27, 1.6);
+
+// Vaso na mesa
+const vaseGeo = new THREE.CylinderGeometry(0.08, 0.05, 0.25, 6);
+const vaseMat = new THREE.MeshLambertMaterial({ color: 0xe07b39 });
+const vase = new THREE.Mesh(vaseGeo, vaseMat);
+vase.position.set(0.4, 0.72, 1.3);
+scene.add(vase);
+
+// Planta no vaso
+const plantGeo = new THREE.SphereGeometry(0.14, 5, 4);
+const plantMat = new THREE.MeshLambertMaterial({ color: 0x2d8a4e });
+const plant = new THREE.Mesh(plantGeo, plantMat);
+plant.position.set(0.4, 0.97, 1.3);
+scene.add(plant);
+
+// ===================== LUMINÁRIA DE PÉ =====================
+box(0.06, 1.5, 0.06, 0xb8860b, -4, 0.75, 0.5);
+const lampShadeGeo = new THREE.ConeGeometry(0.3, 0.4, 6);
+const lampMat = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
+const lampShade = new THREE.Mesh(lampShadeGeo, lampMat);
+lampShade.position.set(-4, 1.7, 0.5);
+lampShade.rotation.x = Math.PI;
+scene.add(lampShade);
+
+const lampLight = new THREE.PointLight(0xffd580, 0.8, 4);
+lampLight.position.set(-4, 1.5, 0.5);
+scene.add(lampLight);
+
+// ===================== QUADRO NA PAREDE =====================
+box(1.8, 1.2, 0.05, 0x1a3a5c, 3, 3.5, -4.84);
+box(1.6, 1.0, 0.06, 0x4a90d9, 3, 3.5, -4.81);
+// Moldura do quadro
+box(1.85, 0.06, 0.07, 0xb8860b, 3, 4.12, -4.82);
+box(1.85, 0.06, 0.07, 0xb8860b, 3, 2.88, -4.82);
+box(0.06, 1.28, 0.07, 0xb8860b, 2.1, 3.5, -4.82);
+box(0.06, 1.28, 0.07, 0xb8860b, 3.9, 3.5, -4.82);
+
+// ===================== TERMÔMETRO DIGITAL (parede) =====================
+box(0.6, 0.4, 0.05, 0x111111, -3.5, 3.2, -4.84);
+box(0.52, 0.32, 0.06, 0x001a00, -3.5, 3.2, -4.81);
+
+// ===================== ANIMAÇÃO =====================
+let alertActive = false;
+let curtainProgress = 0; // 0 = aberta, 1 = fechada
+let acProgress = 0;      // 0 = desligado, 1 = ligado
+let tempDisplay = 0;
+let particles = [];
+
+// Partículas de frio do AC
+function createColdParticle() {
+  const geo = new THREE.SphereGeometry(0.03, 4, 4);
+  const mat = new THREE.MeshLambertMaterial({ color: 0x00cfff, transparent: true, opacity: 0.8 });
+  const p = new THREE.Mesh(geo, mat);
+  p.position.set((Math.random() - 0.5) * 1.5, 5.3, -4.4);
+  p.userData = { vy: -0.015, vx: (Math.random()-0.5)*0.008, life: 1.0 };
+  scene.add(p);
+  particles.push(p);
+}
+
+let frameCount = 0;
+let cameraShake = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+  frameCount++;
+
+  // Suave balanço da câmera
+  const t = frameCount * 0.003;
+  camera.position.x = Math.sin(t * 0.7) * 0.15;
+  camera.position.y = 2 + Math.sin(t) * 0.05;
+
+  if (cameraShake > 0) {
+    camera.position.x += (Math.random() - 0.5) * cameraShake * 0.1;
+    camera.position.y += (Math.random() - 0.5) * cameraShake * 0.05;
+    cameraShake *= 0.92;
+  }
+
+  camera.lookAt(0, 2.5, 0);
+
+  if (alertActive) {
+    // Fechar cortinas: se expandem em largura e se movem para o centro
+    if (curtainProgress < 1) {
+      curtainProgress = Math.min(1, curtainProgress + 0.006);
+      const ease = curtainProgress < 0.5
+        ? 2 * curtainProgress * curtainProgress
+        : -1 + (4 - 2 * curtainProgress) * curtainProgress;
+
+      // Esquerda: vai de x=-1.55 até x=-0.5, e escala em X de 1 até 3
+      curtainL.position.x = -1.55 + ease * 1.05;
+      curtainL.scale.x = 1 + ease * 2.8;
+
+      // Direita: vai de x=1.55 até x=0.5, espelhado
+      curtainR.position.x = 1.55 - ease * 1.05;
+      curtainR.scale.x = 1 + ease * 2.8;
+    }
+
+    // Ligar AC
+    if (acProgress < 1) {
+      acProgress = Math.min(1, acProgress + 0.006);
+      acLight.intensity = acProgress * 1.2;
+      acLedMat.color.setHex(acProgress > 0.5 ? 0x00ff88 : 0xff2200);
+      acLedMat.emissive.setHex(acProgress > 0.5 ? 0x004422 : 0x440000);
+      ambientLight.color.lerp(new THREE.Color(0xddeeff), 0.01);
+    }
+
+    // Partículas de frio
+    if (acProgress > 0.5 && frameCount % 4 === 0) {
+      createColdParticle();
+    }
+  }
+
+  // Atualizar partículas
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.position.y += p.userData.vy;
+    p.position.x += p.userData.vx;
+    p.userData.life -= 0.012;
+    p.material.opacity = p.userData.life * 0.8;
+    if (p.userData.life <= 0) {
+      scene.remove(p);
+      particles.splice(i, 1);
+    }
+  }
+
+  // Piscar LED do AC quando ligando
+  if (acProgress > 0 && acProgress < 0.5) {
+    acLedMat.emissive.setScalar(Math.sin(frameCount * 0.2) * 0.3);
+  }
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+// ===================== LÓGICA DE ALERTA =====================
+function triggerAlert(temp, umid) {
+  if (alertActive) return;
+  alertActive = true;
+  cameraShake = 1.5;
+
+  // Atualizar displays
+  document.getElementById('temp-big').innerHTML = temp.toFixed(1) + '<span id="temp-unit">°C</span>';
+  document.getElementById('temp-big').classList.add('hot');
+  document.getElementById('umid-val').textContent = umid + '%';
+  document.getElementById('alert-temp').innerHTML = temp.toFixed(1) + '<span>°C</span>';
+
+  // Badge de status
+  const badge = document.getElementById('status-badge');
+  badge.className = 'alert';
+  document.getElementById('status-text').textContent = 'ALERTA ATIVO';
+
+  // Overlay
+  document.getElementById('alert-overlay').classList.add('visible');
+
+  // Painel de alerta
+  setTimeout(() => {
+    document.getElementById('alert-panel').classList.add('visible');
+  }, 300);
+
+  // Cards de ação com delay
+
+
+  setTimeout(() => {
+    const winCard = document.getElementById('win-card');
+    winCard.classList.add('active');
+    document.getElementById('win-status').textContent = 'Fechando...';
+    setTimeout(() => {
+      document.getElementById('win-status').textContent = 'Fechadas ✓';
+    }, 3000);
+  }, 1500);
+
+  setTimeout(() => {
+    const acCard = document.getElementById('ac-card');
+    acCard.classList.add('active');
+    document.getElementById('ac-status').textContent = 'Ligando...';
+    setTimeout(() => {
+      document.getElementById('ac-status').textContent = 'Ligado ✓';
+    }, 4000);
+  }, 2500);
+}
+
+function resetAlert() {
+  alertActive = false;
+  curtainProgress = 0;
+  acProgress = 0;
+  curtainL.position.x = -1.55;
+  curtainL.scale.x = 1;
+  curtainR.position.x = 1.55;
+  curtainR.scale.x = 1;
+  acLight.intensity = 0;
+  acLedMat.color.setHex(0xff2222);
+  ambientLight.color.set(0xffeedd);
+  particles.forEach(p => scene.remove(p));
+  particles = [];
+
+  document.getElementById('alert-panel').classList.remove('visible');
+  document.getElementById('alert-overlay').classList.remove('visible');
+  document.getElementById('status-badge').className = 'normal';
+  document.getElementById('status-text').textContent = 'MONITORANDO';
+  document.getElementById('temp-big').classList.remove('hot');
+  ['ac-card','win-card'].forEach(id => document.getElementById(id).classList.remove('active'));
+  document.getElementById('ac-status').textContent = 'Desligado';
+  document.getElementById('win-status').textContent = 'Abertas';
+}
+
+// ===================== MQTT VIA WEBSOCKET =====================
+// O broker HiveMQ tem suporte a WebSocket na porta 8000
+// Para conectar via MQTT no browser, usamos a lib MQTT.js via CDN
+// Descomente e configure quando tiver o broker pronto:
+
+/*
+const mqttScript = document.createElement('script');
+mqttScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js';
+mqttScript.onload = () => {
+  const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+  client.on('connect', () => {
+    client.subscribe('estufa/Victoria/alertas');
+    client.subscribe('estufa/Victoria/sensores');
+    console.log('MQTT conectado!');
+  });
+  client.on('message', (topic, message) => {
+    const data = JSON.parse(message.toString());
+    if (topic === 'estufa/Victoria/sensores') {
+      document.getElementById('temp-big').innerHTML =
+        data.temperatura.toFixed(1) + '<span>°C</span>';
+      document.getElementById('umid-val').textContent = data.umidade + '%';
+      if (data.alerta && !alertActive) {
+        triggerAlert(data.temperatura, data.umidade);
+      }
+    }
+  });
+};
+document.head.appendChild(mqttScript);
+*/
+
+// ===================== TECLADO =====================
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') triggerAlert(42.5, 85);
+  if (e.key === 'Escape') resetAlert();
+});
+
+// Atualizar botão de simulação para resetar se já ativo
+document.getElementById('sim-btn').addEventListener('click', () => {
+  if (alertActive) {
+    resetAlert();
+    document.getElementById('sim-btn').textContent = '▶ SIMULAR ALERTA';
+  } else {
+    triggerAlert(42.5, 85);
+    document.getElementById('sim-btn').textContent = '↺ RESETAR';
+  }
+});
+
+// ===================== RESIZE =====================
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+</script>
+</body>
+</html>

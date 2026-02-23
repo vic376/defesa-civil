@@ -664,30 +664,47 @@ function resetAlert() {
 // Para conectar via MQTT no browser, usamos a lib MQTT.js via CDN
 // Descomente e configure quando tiver o broker pronto:
 
-/*
+// MQTT via WebSocket
 const mqttScript = document.createElement('script');
 mqttScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js';
 mqttScript.onload = () => {
-  const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+  const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+    clientId: 'defesacivil_web_' + Math.random().toString(16).substr(2, 8)
+  });
+
   client.on('connect', () => {
-    client.subscribe('estufa/Victoria/alertas');
-    client.subscribe('estufa/Victoria/sensores');
     console.log('MQTT conectado!');
+    document.getElementById('status-badge').className = 'normal';
+    document.getElementById('status-text').textContent = 'MONITORANDO';
+    client.subscribe('estufa/Victoria/sensores');
+    client.subscribe('estufa/Victoria/alertas');
   });
+
   client.on('message', (topic, message) => {
-    const data = JSON.parse(message.toString());
-    if (topic === 'estufa/Victoria/sensores') {
-      document.getElementById('temp-big').innerHTML =
-        data.temperatura.toFixed(1) + '<span>°C</span>';
-      document.getElementById('umid-val').textContent = data.umidade + '%';
-      if (data.alerta && !alertActive) {
-        triggerAlert(data.temperatura, data.umidade);
+    try {
+      const data = JSON.parse(message.toString());
+      if (topic === 'estufa/Victoria/sensores') {
+        // Atualiza temperatura e umidade em tempo real
+        document.getElementById('temp-big').innerHTML =
+          parseFloat(data.temperatura).toFixed(1) + '<span id="temp-unit">°C</span>';
+        document.getElementById('umid-val').textContent = data.umidade + '%';
+
+        // Dispara alerta se temperatura >= 40
+        if (data.alerta && !alertActive) {
+          triggerAlert(data.temperatura, data.umidade);
+        }
+
+        // Reset se voltou ao normal
+        if (!data.alerta && alertActive) {
+          resetAlert();
+        }
       }
-    }
+    } catch(e) { console.error('Erro MQTT:', e); }
   });
+
+  client.on('error', (err) => console.error('MQTT erro:', err));
 };
 document.head.appendChild(mqttScript);
-*/
 
 // ===================== TECLADO =====================
 document.addEventListener('keydown', e => {

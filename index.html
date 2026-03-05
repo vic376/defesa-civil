@@ -912,12 +912,10 @@ window.addEventListener('resize', () => {
   let history   = [];
 
   const SYSTEM_PROMPT = `Você é o assistente virtual oficial da Defesa Civil Brasileira. 
-Seu papel é orientar a população sobre situações de risco, especialmente ondas de calor, enchentes e deslizamentos.
-Responda de forma clara, direta e humana — como um agente da Defesa Civil falaria com um cidadão preocupado.
-Seja empático mas objetivo. Use no máximo 3 parágrafos curtos por resposta.
-Quando relevante, mencione o número de emergência da Defesa Civil: 199.
-Contexto do sistema: este é um sistema IoT de monitoramento de temperatura em tempo real. 
-Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via WhatsApp para a população.`;
+  Seu papel é orientar a população sobre situações de risco, especialmente ondas de calor, enchentes e deslizamentos. 
+  Responda de forma clara, direta e humana. Use no máximo 3 parágrafos curtos. 
+  Número de emergência: 199. Contexto: Sistema IoT monitorando temperatura. 
+  Se passar de 40°C, alertas são enviados via WhatsApp.`;
 
   const SUGGESTIONS = [
     "O que fazer no calor extremo?",
@@ -950,8 +948,10 @@ Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via
   }
 
   function showWelcome() {
-    addMsg('Olá! Sou o assistente virtual da Defesa Civil. Estou aqui para orientar você sobre situações de risco e emergências. Como posso ajudar?', 'bot');
-    addSuggestions();
+    if (msgs.children.length === 0) {
+      addMsg('Olá! Sou o assistente virtual da Defesa Civil. Como posso ajudar você hoje?', 'bot');
+      addSuggestions();
+    }
   }
 
   async function sendMessage() {
@@ -964,12 +964,13 @@ Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via
 
     isLoading = true;
     send.disabled = true;
-    const typing = addMsg('Digitando...', 'bot typing');
+    const typing = addMsg('Analisando...', 'bot typing');
 
     try {
       const GEMINI_KEY = 'AIzaSyBetNh-bipnFKtYO0XTWy3R8JTeRTivgiA';
+      const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_KEY}`, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -987,29 +988,37 @@ Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via
         })
       });
 
-      const data = await res.json();
-      if (data.error) console.error('Gemini erro:', data.error);
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Desculpe, não consegui processar sua mensagem.';
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('Erro detalhado:', data.error);
+        throw new Error(data.error?.message || 'Erro na API');
+      }
+
+      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Não consegui processar sua resposta.';
 
       typing.remove();
       addMsg(reply, 'bot');
       history.push({ role: 'assistant', content: reply });
 
     } catch(e) {
+      console.error('Erro detalhado:', e);
       typing.remove();
-      addMsg('Erro de conexão. Tente novamente.', 'bot');
+      addMsg('Ops! Tive um problema técnico. Tente novamente.', 'bot');
+    } finally {
+      isLoading = false;
+      send.disabled = false;
+      input.focus();
     }
-
-    isLoading = false;
-    send.disabled = false;
-    input.focus();
   }
 
   btn.addEventListener('click', () => {
     isOpen = !isOpen;
     window_.classList.toggle('open', isOpen);
-    if (isOpen && msgs.children.length === 0) showWelcome();
-    if (isOpen) input.focus();
+    if (isOpen) {
+      showWelcome();
+      setTimeout(() => input.focus(), 300);
+    }
   });
 
   send.addEventListener('click', sendMessage);

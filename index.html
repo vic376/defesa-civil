@@ -968,16 +968,24 @@ Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via
 
     try {
       const GEMINI_KEY = 'kf_2a2w8p8sxb5m61x2lqef7zynshdapck2';
+
+      // Gemini precisa que o histórico comece com 'user' e alterne corretamente
+      const contents = [];
+      // Adiciona contexto do sistema como primeira mensagem user/model
+      contents.push({ role: 'user', parts: [{ text: 'Você é o assistente virtual da Defesa Civil. ' + SYSTEM_PROMPT }] });
+      contents.push({ role: 'model', parts: [{ text: 'Entendido! Estou pronto para orientar a população como assistente virtual da Defesa Civil Brasileira.' }] });
+      // Adiciona histórico real
+      history.forEach(m => {
+        contents.push({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }]
+        });
+      });
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: history.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content }]
-          }))
-        })
+        body: JSON.stringify({ contents })
       });
 
       const data = await res.json();

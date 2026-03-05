@@ -969,7 +969,7 @@ Quando a temperatura ultrapassa 40°C, alertas são enviados automaticamente via
     try {
       const GEMINI_KEY = 'AIzaSyBetNh-bipnFKtYO0XTWy3R8JTeRTivgiA';
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`, {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_KEY}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

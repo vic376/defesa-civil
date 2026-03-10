@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Defesa Civil — Fluxo do Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #e63946;
+  --red-glow: rgba(230,57,70,0.25);
+  --bg: #f5f0e8;
+  --bg2: #ffffff;
+  --bg3: #ede8e0;
+  --border: rgba(230,57,70,0.15);
+  --border-bright: rgba(230,57,70,0.45);
+  --text: #2a2a2a;
+  --text-dim: #888880;
+  --green: #2d8a3a;
+  --yellow: #b07800;
+  --blue: #1a6fa5;
+  --orange: #c0603a;
+  --purple: #7a3a9a;
+  --mono: 'Inter', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanlines sutis */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(180,140,100,0.025) 3px, rgba(180,140,100,0.025) 4px);
+  pointer-events: none; z-index: 100;
+}
+
+/* ===== HEADER ===== */
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 40px;
+  background: #0a0a0f;
+  border-bottom: 3px solid var(--red);
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 20px rgba(230,57,70,0.2);
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+
+.shield {
+  width: 38px; height: 38px;
+  background: var(--red);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  animation: pulse-shield 3s ease-in-out infinite;
+}
+@keyframes pulse-shield {
+  0%,100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.5); }
+  50% { box-shadow: 0 0 0 10px rgba(230,57,70,0); }
+}
+
+.header-title {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 4px; color: #fff;
+}
+.header-sub { font-size: 10px; color: #666; letter-spacing: 2px; margin-top: 1px; font-family: var(--mono); }
+
+.nav-links { display: flex; gap: 8px; }
+.nav-link {
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 1.5px;
+  color: #888;
+  text-decoration: none;
+  padding: 6px 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--red); border-color: var(--border-bright); }
+.nav-link.active { color: var(--red); border-color: var(--border-bright); background: rgba(230,57,70,0.1); }
+
+/* ===== HERO ===== */
+.hero {
+  padding: 48px 40px 24px;
+  text-align: center;
+  position: relative;
+  background: linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+  border-bottom: 1px solid rgba(200,169,110,0.3);
+}
+
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 10px; letter-spacing: 3px;
+  color: var(--red); text-transform: uppercase;
+  margin-bottom: 12px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.hero-tag::before, .hero-tag::after {
+  content: ''; width: 40px; height: 1px; background: var(--border-bright);
+}
+
+.hero-title {
+  font-family: var(--display);
+  font-size: clamp(32px, 5vw, 56px);
+  letter-spacing: 3px;
+  color: #0a0a0f; line-height: 1;
+  margin-bottom: 12px;
+}
+.hero-title span { color: var(--red); }
+
+.hero-desc {
+  font-size: 13px; color: var(--text-dim);
+  letter-spacing: 0.5px; max-width: 600px; margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ===== FLUXO PRINCIPAL ===== */
+.fluxo-wrapper {
+  padding: 40px 40px 20px;
+  overflow-x: auto;
+  background: var(--bg);
+}
+
+.fluxo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 1000px;
+  position: relative;
+  padding: 20px 0 40px;
+}
+
+/* ===== NÓS DO FLUXO ===== */
+.node {
+  display: flex; flex-direction: column; align-items: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+.node:hover { transform: translateY(-6px); }
+.node:hover .node-card {
+  border-color: var(--border-bright);
+  box-shadow: 0 8px 32px var(--red-glow), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.node-card {
+  width: 120px;
+  background: var(--bg2);
+  border: 1px solid rgba(200,169,110,0.4);
+  border-radius: 6px;
+  padding: 16px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.node-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  transition: background 0.3s;
+}
+
+/* Cores por categoria */
+.node.sensor .node-card::before { background: var(--green); }
+.node.micro .node-card::before  { background: var(--blue); }
+.node.proto .node-card::before  { background: var(--yellow); }
+.node.soft .node-card::before   { background: var(--orange); }
+.node.clp .node-card::before    { background: var(--red); }
+.node.atu .node-card::before    { background: var(--purple); }
+
+.node-icon {
+  font-size: 28px; margin-bottom: 8px;
+  display: block;
+}
+
+.node-name {
+  font-family: var(--display);
+  font-size: 14px;
+  letter-spacing: 1px; color: #0a0a0f;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.node-type {
+  font-family: var(--mono);
+  font-size: 8px; letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.node.sensor .node-type { color: var(--green); }
+.node.micro .node-type  { color: var(--blue); }
+.node.proto .node-type  { color: var(--yellow); }
+.node.soft .node-type   { color: var(--orange); }
+.node.clp .node-type    { color: var(--red); }
+.node.atu .node-type    { color: var(--purple); }
+
+.node-badge {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  animation: blink 2s infinite;
+}
+.node.sensor .node-badge { background: var(--green); }
+.node.micro .node-badge  { background: var(--blue); }
+.node.proto .node-badge  { background: var(--yellow); }
+.node.soft .node-badge   { background: var(--orange); }
+.node.clp .node-badge    { background: var(--red); }
+.node.atu .node-badge    { background: var(--purple); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* Label abaixo */
+.node-label {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 9px; letter-spacing: 0.5px;
+  color: var(--text-dim); text-align: center;
+  max-width: 130px; line-height: 1.4;
+}
+
+/* ===== CONECTORES ===== */
+.connector {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: 80px; flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+
+.connector-line {
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, rgba(200,169,110,0.3), var(--red), rgba(200,169,110,0.3));
+  position: relative; overflow: hidden;
+}
+
+.connector-line::after {
+  content: '';
+  position: absolute; top: -1px; left: -100%;
+  width: 40%; height: 4px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  animation: flow 2s linear infinite;
+}
+
+.connector:nth-child(2) .connector-line::after  { animation-delay: 0s; }
+.connector:nth-child(4) .connector-line::after  { animation-delay: 0.4s; }
+.connector:nth-child(6) .connector-line::after  { animation-delay: 0.8s; }
+.connector:nth-child(8) .connector-line::after  { animation-delay: 1.2s; }
+.connector:nth-child(10) .connector-line::after { animation-delay: 1.6s; }
+
+@keyframes flow {
+  0%   { left: -40%; }
+  100% { left: 110%; }
+}
+
+.connector-arrow {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--red);
+  margin-top: 4px; letter-spacing: 1px;
+}
+
+.connector-proto {
+  font-family: var(--mono);
+  font-size: 8px; color: var(--text-dim);
+  letter-spacing: 1px; text-align: center;
+  margin-top: 2px; font-weight: 600;
+}
+
+/* ===== ATUADORES EXPANDIDO ===== */
+.atuadores-group {
+  display: flex; flex-direction: column;
+  gap: 8px; position: relative; z-index: 2;
+}
+
+.atu-mini {
+  background: var(--bg2);
+  border: 1px solid rgba(122,58,154,0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 130px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.atu-mini:hover {
+  border-color: rgba(122,58,154,0.5);
+  background: rgba(122,58,154,0.05);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(122,58,154,0.15);
+}
+.atu-mini-icon { font-size: 16px; }
+.atu-mini-name {
+  font-family: var(--display);
+  font-size: 12px;
+  color: #1a1a1a; letter-spacing: 1px;
+}
+.atu-mini-sub {
+  font-family: var(--mono);
+  font-size: 8px; color: var(--purple);
+  letter-spacing: 0.5px; font-weight: 600;
+}
+
+/* ===== LEGENDA ===== */
+.legenda {
+  display: flex; justify-content: center; gap: 24px;
+  padding: 0 40px 20px;
+  flex-wrap: wrap;
+  background: var(--bg);
+}
+
+.legenda-item {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.5px; color: var(--text-dim);
+  font-weight: 600;
+}
+.legenda-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+
+/* ===== SEÇÃO INFERIOR: INFO + FOTO ===== */
+.info-section {
+  padding: 20px 40px 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  max-width: 1200px; margin: 0 auto;
+  background: var(--bg);
+}
+
+.info-card {
+  background: var(--bg2);
+  border: 1px solid rgba(200,169,110,0.35);
+  border-radius: 6px;
+  padding: 24px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+.info-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  opacity: 0.7;
+}
+
+.info-card-title {
+  font-family: var(--display);
+  font-size: 20px;
+  letter-spacing: 3px; color: #0a0a0f;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.info-card-title span { color: var(--red); }
+
+.step-list { display: flex; flex-direction: column; gap: 12px; }
+
+.step {
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.step-num {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--red);
+  background: rgba(230,57,70,0.08);
+  border: 1px solid rgba(230,57,70,0.3);
+  border-radius: 3px;
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px; font-weight: 700;
+}
+.step-text { font-size: 13px; color: #444; line-height: 1.6; }
+.step-text strong { color: #0a0a0f; }
+
+/* ===== FOTO CLP ===== */
+.clp-foto-card {
+  background: var(--bg2);
+  border: 1px solid rgba(230,57,70,0.2);
+  border-radius: 6px;
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.foto-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.foto-item {
+  background: var(--bg3);
+  border: 1px solid rgba(200,169,110,0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.foto-item:hover { border-color: var(--border-bright); transform: scale(1.02); }
+
+.foto-placeholder {
+  height: 110px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ede8e0, #e8e0d4);
+  font-size: 32px;
+}
+
+.foto-caption {
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 9px; letter-spacing: 0.5px;
+  color: var(--text-dim); font-weight: 600;
+}
+.foto-caption strong { color: #1a1a1a; display: block; margin-bottom: 2px; font-size: 10px; }
+
+/* ===== MODAL DE DETALHE ===== */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(10,10,15,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+#modal-overlay.open { opacity: 1; pointer-events: all; }
+
+#modal {
+  background: #fff;
+  border: 1px solid var(--border-bright);
+  border-top: 4px solid var(--red);
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 480px; width: 90%;
+  position: relative;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(230,57,70,0.1);
+}
+#modal-overlay.open #modal { transform: translateY(0) scale(1); }
+
+#modal-close {
+  position: absolute; top: 14px; right: 14px;
+  background: var(--bg3); border: none;
+  color: #888; font-size: 16px; cursor: pointer;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+#modal-close:hover { background: var(--red); color: #fff; }
+
+#modal-icon { font-size: 40px; margin-bottom: 12px; display: block; }
+#modal-title {
+  font-family: var(--display);
+  font-size: 26px;
+  letter-spacing: 3px; color: #0a0a0f; margin-bottom: 4px;
+}
+#modal-type {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2px; margin-bottom: 16px;
+  font-weight: 700;
+}
+#modal-desc {
+  font-size: 13px; color: #444;
+  line-height: 1.7;
+  border-top: 1px solid rgba(200,169,110,0.3);
+  padding-top: 16px;
+}
+#modal-specs {
+  margin-top: 16px;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.spec-tag {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 0.5px; padding: 4px 10px;
+  border-radius: 3px; border: 1px solid;
+  font-weight: 700;
+}
+
+/* ===== RODAPÉ ===== */
+footer {
+  text-align: center; padding: 16px;
+  font-family: var(--mono);
+  font-size: 9px; color: var(--text-dim);
+  letter-spacing: 2px;
+  border-top: 1px solid rgba(200,169,110,0.3);
+  background: #0a0a0f; color: #444;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar {
+  display: flex; align-items: center; justify-content: center; gap: 24px;
+  padding: 8px 40px;
+  background: #fff;
+  border-bottom: 1px solid rgba(200,169,110,0.3);
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1px; color: var(--text-dim);
+  flex-wrap: wrap; font-weight: 600;
+}
+.status-item { display: flex; align-items: center; gap: 6px; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .info-section { grid-template-columns: 1fr; }
+  .hero { padding: 32px 20px 16px; }
+  .fluxo-wrapper { padding: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="shield">🛡</div>
+    <div>
+      <div class="header-title">Defesa Civil — Fluxo do Sistema</div>
+      <div class="header-sub">ARQUITETURA IOT + AUTOMAÇÃO INDUSTRIAL</div>
+    </div>
+  </div>
+  <nav class="nav-links">
+    <a href="index.html" class="nav-link">🏠 Casa</a>
+    <a href="painel.html" class="nav-link">📊 Painel</a>
+    <a href="fluxo.html" class="nav-link active">⚡ Fluxo</a>
+  </nav>
+</header>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-item"><div class="status-dot" style="background:#22c55e;animation:blink 1.5s infinite"></div>SISTEMA ATIVO</div>
+  <div class="status-item"><div class="status-dot" style="background:#38bdf8"></div>6 COMPONENTES</div>
+  <div class="status-item"><div class="status-dot" style="background:#f59e0b"></div>PROTOCOLO MQTT</div>
+  <div class="status-item"><div class="status-dot" style="background:#e63946"></div>CLP SIEMENS S7-1200</div>
+  <div class="status-item"><div class="status-dot" style="background:#a855f7"></div>4 ATUADORES</div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">Arquitetura do Sistema</div>
+  <div class="hero-title">FLUXO DE <span>DADOS</span> E CONTROLE</div>
+  <div class="hero-desc">Do sensor ao atuador — como o sistema de monitoramento da Defesa Civil se integra à automação industrial via CLP</div>
+</div>
+
+<!-- FLUXO PRINCIPAL -->
+<div class="fluxo-wrapper">
+  <div class="fluxo-container" id="fluxo">
+
+    <!-- DHT22 -->
+    <div class="node sensor" onclick="openModal('dht22')">
+      <div class="node-card">
+        <div class="node-badge"></div>
+        <span class="node-icon">🌡️</span>
+        <div class="node-name">DHT22</div>
+        <div class="node-type">SENSOR</div>
+      </div>
+      <div class="node-label">Temp. & Umidade<br>±0.5°C precisão</div>
+    </div>
+
+    <!-- Conector 1 -->
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-proto">GPIO</div>
+    </div>
+
+    <!-- ESP32 -->
+    <div class="node micro" onclick="openModal('esp32')">
+      <div class="node-card">
+        <div class="node-badge"></div>
+        <span class="node-icon">🔲</span>
+        <div class="node-name">ESP32</div>
+        <div class="node-type">MICROCONTROLADOR</div>
+      </div>
+      <div class="node-label">Leitura & Wi-Fi<br>240MHz dual core</div>
+    </div>
+
+    <!-- Conector 2 -->
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-proto">MQTT/TLS</div>
+    </div>
+
+    <!-- MQTT -->
+    <div class="node proto" onclick="openModal('mqtt')">
+      <div class="node-card">
+        <div class="node-badge"></div>
+        <span class="node-icon">📡</span>
+        <div class="node-name">MQTT</div>
+        <div class="node-type">PROTOCOLO</div>
+      </div>
+      <div class="node-label">HiveMQ Broker<br>Pub/Sub em tempo real</div>
+    </div>
+
+    <!-- Conector 3 -->
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-proto">WebSocket</div>
+    </div>
+
+    <!-- Node-RED -->
+    <div class="node soft" onclick="openModal('nodered')">
+      <div class="node-card">
+        <div class="node-badge"></div>
+        <span class="node-icon">🔴</span>
+        <div class="node-name">Node-RED</div>
+        <div class="node-type">ORQUESTRADOR</div>
+      </div>
+      <div class="node-label">Lógica de negócio<br>MySQL + WhatsApp</div>
+    </div>
+
+    <!-- Conector 4 -->
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-proto">Modbus TCP</div>
+    </div>
+
+    <!-- CLP -->
+    <div class="node clp" onclick="openModal('clp')">
+      <div class="node-card" style="border-color:rgba(230,57,70,0.4);box-shadow:0 0 20px rgba(230,57,70,0.15)">
+        <div class="node-badge"></div>
+        <span class="node-icon">🏭</span>
+        <div class="node-name">CLP</div>
+        <div class="node-type">SIEMENS S7-1200</div>
+      </div>
+      <div class="node-label">Controle industrial<br>Lógica ladder</div>
+    </div>
+
+    <!-- Conector 5 -->
+    <div class="connector">
+      <div class="connector-line"></div>
+      <div class="connector-proto">24V DC</div>
+    </div>
+
+    <!-- ATUADORES -->
+    <div class="node atu" style="cursor:default;transform:none">
+      <div class="atuadores-group">
+        <div class="atu-mini" onclick="openModal('ac')">
+          <span class="atu-mini-icon">❄️</span>
+          <div>
+            <div class="atu-mini-name">AR-COND.</div>
+            <div class="atu-mini-sub">Contator 220V</div>
+          </div>
+        </div>
+        <div class="atu-mini" onclick="openModal('sirene')">
+          <span class="atu-mini-icon">🚨</span>
+          <div>
+            <div class="atu-mini-name">SIRENE</div>
+            <div class="atu-mini-sub">Saída digital</div>
+          </div>
+        </div>
+        <div class="atu-mini" onclick="openModal('fechadura')">
+          <span class="atu-mini-icon">🔒</span>
+          <div>
+            <div class="atu-mini-name">FECHADURA</div>
+            <div class="atu-mini-sub">Solenoide 12V</div>
+          </div>
+        </div>
+        <div class="atu-mini" onclick="openModal('valvula')">
+          <span class="atu-mini-icon">💧</span>
+          <div>
+            <div class="atu-mini-name">VÁLVULA</div>
+            <div class="atu-mini-sub">Água emergência</div>
+          </div>
+        </div>
+      </div>
+      <div class="node-label" style="margin-top:10px">Clique em cada atuador</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEGENDA -->
+<div class="legenda">
+  <div class="legenda-item"><div class="legenda-dot" style="background:#22c55e"></div>SENSOR</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#38bdf8"></div>MICROCONTROLADOR</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#f59e0b"></div>PROTOCOLO</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#fb923c"></div>SOFTWARE</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#e63946"></div>CLP INDUSTRIAL</div>
+  <div class="legenda-item"><div class="legenda-dot" style="background:#a855f7"></div>ATUADORES</div>
+</div>
+
+<!-- SEÇÃO INFERIOR -->
+<div class="info-section">
+
+  <!-- Card de fluxo de dados -->
+  <div class="info-card">
+    <div class="info-card-title">⚡ Como o <span>Fluxo</span> Funciona</div>
+    <div class="step-list">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-text">O <strong>DHT22</strong> mede temperatura e umidade a cada 2 segundos e envia via GPIO ao ESP32</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-text">O <strong>ESP32</strong> processa os dados e publica via Wi-Fi no broker MQTT usando protocolo seguro TLS</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-text">O <strong>Node-RED</strong> recebe os dados, salva no MySQL, envia alertas via WhatsApp e aciona o CLP</div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-text">O <strong>CLP Siemens S7-1200</strong> executa a lógica ladder: se T ≥ 40°C → aciona saídas digitais para os atuadores</div>
+      </div>
+      <div class="step">
+        <div class="step-num">05</div>
+        <div class="step-text">Os <strong>atuadores</strong> (AC, sirene, fechadura, válvula) são acionados automaticamente para proteger os moradores</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card de fotos -->
+  <div class="info-card clp-foto-card">
+    <div class="info-card-title">🏭 Componentes <span>Industriais</span></div>
+    <div class="foto-grid">
+      <div class="foto-item" onclick="openModal('clp')">
+        <div class="foto-placeholder">
+          🏭
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">SIEMENS S7-1200</span>
+        </div>
+        <div class="foto-caption">
+          <strong>CLP Siemens S7-1200</strong>
+          Controlador compacto industrial
+        </div>
+      </div>
+      <div class="foto-item" onclick="openModal('modbus')">
+        <div class="foto-placeholder">
+          🔌
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">MODBUS TCP/IP</span>
+        </div>
+        <div class="foto-caption">
+          <strong>Interface Modbus TCP</strong>
+          Comunicação Node-RED → CLP
+        </div>
+      </div>
+      <div class="foto-item" onclick="openModal('contator')">
+        <div class="foto-placeholder">
+          ⚡
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">CONTATOR 220V</span>
+        </div>
+        <div class="foto-caption">
+          <strong>Contator Elétrico</strong>
+          Aciona AC via saída CLP
+        </div>
+      </div>
+      <div class="foto-item" onclick="openModal('ladder')">
+        <div class="foto-placeholder">
+          📋
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">LÓGICA LADDER</span>
+        </div>
+        <div class="foto-caption">
+          <strong>Programação Ladder</strong>
+          Lógica de controle do CLP
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <button id="modal-close" onclick="closeModal()">✕</button>
+    <span id="modal-icon">🔲</span>
+    <div id="modal-title">COMPONENTE</div>
+    <div id="modal-type" style="color:#888">TIPO</div>
+    <div id="modal-desc">Descrição do componente</div>
+    <div id="modal-specs"></div>
+  </div>
+</div>
+
+<footer>DEFESA CIVIL BRASILEIRA · SISTEMA IOT · INTEGRAÇÃO CLP SIEMENS S7-1200 · AUTOMAÇÃO INDUSTRIAL</footer>
+
+<script>
+const DATA = {
+  dht22: {
+    icon: '🌡️', title: 'DHT22', type: 'SENSOR DE TEMPERATURA E UMIDADE',
+    color: '#22c55e',
+    desc: 'Sensor digital de temperatura e umidade de alta precisão. Utiliza comunicação serial de fio único. Capaz de medir temperaturas de -40°C a +80°C com precisão de ±0.5°C e umidade de 0 a 100% UR com precisão de ±2-5%. No projeto, é responsável pela leitura ambiental que dispara os alertas da Defesa Civil quando a temperatura ultrapassa 40°C.',
+    specs: ['Temp: -40°C a +80°C', 'Precisão: ±0.5°C', 'Umidade: 0–100% UR', 'Tensão: 3.3–5V', 'Interface: 1-wire']
+  },
+  esp32: {
+    icon: '🔲', title: 'ESP32', type: 'MICROCONTROLADOR WI-FI/BLUETOOTH',
+    color: '#38bdf8',
+    desc: 'Microcontrolador de duplo núcleo de 240MHz com Wi-Fi e Bluetooth integrados. No projeto, lê os dados do DHT22 via GPIO, processa e publica no broker MQTT via rede Wi-Fi. Também hospeda a lógica de alerta local: se a temperatura ultrapassar 40°C, acende um LED e envia o payload de alerta.',
+    specs: ['CPU: 240MHz dual core', 'RAM: 520KB SRAM', 'Wi-Fi: 802.11 b/g/n', 'Flash: 4MB', 'GPIO: 34 pinos']
+  },
+  mqtt: {
+    icon: '📡', title: 'MQTT', type: 'PROTOCOLO DE MENSAGERIA IOT',
+    color: '#f59e0b',
+    desc: 'MQTT (Message Queuing Telemetry Transport) é o protocolo padrão para comunicação IoT. Usa modelo Publish/Subscribe através de um broker central. No projeto, o ESP32 publica no tópico estufa/Victoria/sensores e o Node-RED subscreve para receber os dados em tempo real. O broker utilizado é o HiveMQ na nuvem.',
+    specs: ['Broker: HiveMQ Cloud', 'Porta: 8884 (WSS)', 'QoS: Level 1', 'Tópico: estufa/Victoria/+', 'Protocolo: MQTT 3.1.1']
+  },
+  nodered: {
+    icon: '🔴', title: 'NODE-RED', type: 'PLATAFORMA DE ORQUESTRAÇÃO IOT',
+    color: '#fb923c',
+    desc: 'Node-RED é uma plataforma de programação visual baseada em fluxos para conectar dispositivos IoT. No projeto, recebe os dados do MQTT, salva no banco MySQL (Filess.io), envia alertas via WhatsApp (Twilio) e aciona o CLP via Modbus TCP quando a temperatura ultrapassa o limite crítico de 40°C.',
+    specs: ['Runtime: Node.js', 'Banco: MySQL', 'Alertas: WhatsApp/Twilio', 'CLP: Modbus TCP', 'Dashboard: em tempo real']
+  },
+  clp: {
+    icon: '🏭', title: 'CLP SIEMENS S7-1200', type: 'CONTROLADOR LÓGICO PROGRAMÁVEL',
+    color: '#e63946',
+    desc: 'O Siemens SIMATIC S7-1200 é um CLP compacto de alto desempenho para automação industrial. No projeto, recebe o comando do Node-RED via Modbus TCP e executa a lógica ladder: quando T ≥ 40°C, aciona as saídas digitais para os atuadores (AC, sirene, fechadura, válvula de água). É o "cérebro industrial" do sistema.',
+    specs: ['CPU: 1214C AC/DC/Rly', 'Memória: 100KB trabalho', 'E/S digitais: 14 DI / 10 DO', 'Comunicação: Modbus TCP', 'Linguagem: Ladder + FBD']
+  },
+  ac: {
+    icon: '❄️', title: 'AR-CONDICIONADO', type: 'ATUADOR — CONTATOR 220V',
+    color: '#a855f7',
+    desc: 'O ar-condicionado é acionado automaticamente pelo CLP via contator elétrico quando a temperatura atinge 40°C. O CLP aciona a bobina do contator (24V DC) que fecha o circuito de 220V do equipamento. Na animação 3D da página principal, partículas azuis de frio são emitidas quando o AC é ligado.',
+    specs: ['Tensão: 220V AC', 'Acionamento: Contator', 'Sinal CLP: 24V DC', 'Resposta: < 1s', 'Reset: Automático']
+  },
+  sirene: {
+    icon: '🚨', title: 'SIRENE DE ALERTA', type: 'ATUADOR — SAÍDA DIGITAL CLP',
+    color: '#a855f7',
+    desc: 'Sirene sonora e visual acionada pelo CLP para alertar os moradores sobre temperatura crítica. Conectada diretamente a uma saída digital do CLP (24V DC). Pode ser configurada para emitir padrões sonoros diferentes dependendo do nível de alerta (atenção vs emergência).',
+    specs: ['Tensão: 24V DC', 'Saída: Digital CLP', 'Decibéis: 85-110 dB', 'Alcance: ~50 metros', 'IP: IP65 (externo)']
+  },
+  fechadura: {
+    icon: '🔒', title: 'FECHADURA INTELIGENTE', type: 'ATUADOR — SOLENOIDE 12V',
+    color: '#a855f7',
+    desc: 'Fechadura eletromagnética acionada por solenoide 12V DC controlado pelo CLP. Em situação de emergência, pode tanto trancar (segurança) quanto destrancar (evacuação) as portas conforme a lógica programada. Integração com o sistema garante ação automática sem intervenção humana.',
+    specs: ['Tensão: 12V DC', 'Tipo: Solenoide', 'Força: 600 kg', 'Tempo resposta: 50ms', 'Modo fail-safe']
+  },
+  valvula: {
+    icon: '💧', title: 'VÁLVULA DE ÁGUA', type: 'ATUADOR — VÁLVULA SOLENÓIDE',
+    color: '#a855f7',
+    desc: 'Válvula solenóide para controle de fluxo de água em emergências. Pode ser usada para ativar sistema de aspersão ou bloquear fornecimento em caso de risco. Acionada pelo CLP via saída digital, permite resposta automática a situações críticas de temperatura extrema.',
+    specs: ['Tensão: 220V AC', 'Tipo: Normalmente fechada', 'Pressão: até 10 bar', 'DN: 1/2" a 2"', 'Tempo abertura: < 2s']
+  },
+  modbus: {
+    icon: '🔌', title: 'MODBUS TCP/IP', type: 'PROTOCOLO INDUSTRIAL',
+    color: '#e63946',
+    desc: 'Modbus TCP é o protocolo industrial padrão para comunicação entre sistemas supervisórios (como Node-RED) e CLPs. Transmite dados pela rede Ethernet usando estrutura mestre-escravo. O Node-RED atua como mestre e escreve nos registradores do CLP para acionar as saídas digitais.',
+    specs: ['Porta: 502', 'Camada: TCP/IP', 'Função: 0x01, 0x05, 0x0F', 'Registradores: Coils', 'Latência: < 10ms LAN']
+  },
+  contator: {
+    icon: '⚡', title: 'CONTATOR ELÉTRICO', type: 'COMPONENTE DE POTÊNCIA',
+    color: '#f59e0b',
+    desc: 'O contator é um interruptor eletromagnético usado para acionar cargas de alta potência (como motores e ar-condicionados) a partir de sinais de baixa tensão do CLP (24V DC). É o elemento de interface entre o mundo de controle (CLP, 24V) e o mundo de potência (AC, 220V).',
+    specs: ['Bobina: 24V DC', 'Carga: até 9A / 220V', 'Contatos: 3 NO', 'Categoria: AC-3', 'Norma: IEC 60947-4-1']
+  },
+  ladder: {
+    icon: '📋', title: 'LÓGICA LADDER', type: 'LINGUAGEM DE PROGRAMAÇÃO CLP',
+    color: '#22c55e',
+    desc: 'Ladder (ou diagrama de contatos) é a linguagem de programação mais utilizada em CLPs, baseada em diagramas de relés. No projeto, a lógica implementada verifica: SE temperatura ≥ 40°C ENTÃO aciona saída Q0.0 (AC) E Q0.1 (sirene). Segue a norma IEC 61131-3 de programação de CLPs.',
+    specs: ['Norma: IEC 61131-3', 'Tipo: Linguagem gráfica', 'Software: TIA Portal v17', 'Ciclo: < 1ms', 'Contatos: NO, NC, bobinas']
+  }
+};
+
+function openModal(id) {
+  const d = DATA[id];
+  if (!d) return;
+  document.getElementById('modal-icon').textContent = d.icon;
+  document.getElementById('modal-title').textContent = d.title;
+  document.getElementById('modal-type').textContent = d.type;
+  document.getElementById('modal-type').style.color = d.color;
+  document.getElementById('modal-desc').textContent = d.desc;
+
+  const specs = document.getElementById('modal-specs');
+  specs.innerHTML = d.specs.map(s =>
+    `<span class="spec-tag" style="color:${d.color};border-color:${d.color}33;background:${d.color}11">${s}</span>`
+  ).join('');
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modal-overlay') || e.currentTarget.id === 'modal-close') {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal({target: document.getElementById('modal-overlay')}); });
+</script>
+</body>
+</html>

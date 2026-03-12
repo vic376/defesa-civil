@@ -547,7 +547,7 @@ footer {
   <div class="status-item"><div class="status-dot" style="background:#22c55e;animation:blink 1.5s infinite"></div>SISTEMA ATIVO</div>
   <div class="status-item"><div class="status-dot" style="background:#38bdf8"></div>6 COMPONENTES</div>
   <div class="status-item"><div class="status-dot" style="background:#f59e0b"></div>PROTOCOLO MQTT</div>
-  <div class="status-item"><div class="status-dot" style="background:#e63946"></div>CLP SIEMENS S7-1200</div>
+  <div class="status-item"><div class="status-dot" style="background:#e63946"></div>CLP WEG PLC300</div>
   <div class="status-item"><div class="status-dot" style="background:#a855f7"></div>4 ATUADORES</div>
 </div>
 
@@ -636,7 +636,7 @@ footer {
         <div class="node-badge"></div>
         <span class="node-icon">🏭</span>
         <div class="node-name">CLP</div>
-        <div class="node-type">SIEMENS S7-1200</div>
+        <div class="node-type">WEG PLC300</div>
       </div>
       <div class="node-label">Controle industrial<br>Lógica ladder</div>
     </div>
@@ -716,7 +716,7 @@ footer {
       </div>
       <div class="step">
         <div class="step-num">04</div>
-        <div class="step-text">O <strong>CLP Siemens S7-1200</strong> executa a lógica ladder: se T ≥ 40°C → aciona saídas digitais para os atuadores</div>
+        <div class="step-text">O <strong>CLP WEG PLC300</strong> executa a lógica ladder: se T ≥ 40°C → aciona saídas digitais para os atuadores</div>
       </div>
       <div class="step">
         <div class="step-num">05</div>
@@ -732,10 +732,10 @@ footer {
       <div class="foto-item" onclick="openModal('clp')">
         <div class="foto-placeholder">
           🏭
-          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">SIEMENS S7-1200</span>
+          <span style="font-family:var(--mono);font-size:8px;color:var(--text-dim)">WEG PLC300</span>
         </div>
         <div class="foto-caption">
-          <strong>CLP Siemens S7-1200</strong>
+          <strong>CLP WEG PLC300</strong>
           Controlador compacto industrial
         </div>
       </div>
@@ -786,7 +786,7 @@ footer {
   </div>
 </div>
 
-<footer>DEFESA CIVIL BRASILEIRA · SISTEMA IOT · INTEGRAÇÃO CLP SIEMENS S7-1200 · AUTOMAÇÃO INDUSTRIAL</footer>
+<footer>DEFESA CIVIL BRASILEIRA · SISTEMA IOT · INTEGRAÇÃO CLP WEG PLC300 · AUTOMAÇÃO INDUSTRIAL</footer>
 
 <script>
 const DATA = {
@@ -815,10 +815,10 @@ const DATA = {
     specs: ['Runtime: Node.js', 'Banco: MySQL', 'Alertas: WhatsApp/Twilio', 'CLP: Modbus TCP', 'Dashboard: em tempo real']
   },
   clp: {
-    icon: '🏭', title: 'CLP SIEMENS S7-1200', type: 'CONTROLADOR LÓGICO PROGRAMÁVEL',
+    icon: '🏭', title: 'CLP WEG PLC300', type: 'CONTROLADOR LÓGICO PROGRAMÁVEL',
     color: '#e63946',
-    desc: 'O Siemens SIMATIC S7-1200 é um CLP compacto de alto desempenho para automação industrial. No projeto, recebe o comando do Node-RED via Modbus TCP e executa a lógica ladder: quando T ≥ 40°C, aciona as saídas digitais para os atuadores (AC, sirene, fechadura, válvula de água). É o "cérebro industrial" do sistema.',
-    specs: ['CPU: 1214C AC/DC/Rly', 'Memória: 100KB trabalho', 'E/S digitais: 14 DI / 10 DO', 'Comunicação: Modbus TCP', 'Linguagem: Ladder + FBD']
+    desc: 'O WEG PLC300 é um CLP compacto de alto desempenho fabricado no Brasil, equivalente direto ao Siemens S7-1200 em capacidade e aplicação. No projeto, recebe o comando do Node-RED via Modbus TCP e executa a lógica ladder: quando T ≥ 40°C, aciona as saídas digitais para os atuadores (AC, sirene, fechadura, válvula de água). É o "cérebro industrial" do sistema — e ainda tem a vantagem de ser nacional.',
+    specs: ['CPU: PLC300-24VDC', 'Memória: 128KB programa', 'E/S digitais: 12 DI / 8 DO', 'Comunicação: Modbus TCP', 'Linguagem: Ladder + FBD']
   },
   ac: {
     icon: '❄️', title: 'AR-CONDICIONADO', type: 'ATUADOR — CONTATOR 220V',
@@ -859,8 +859,8 @@ const DATA = {
   ladder: {
     icon: '📋', title: 'LÓGICA LADDER', type: 'LINGUAGEM DE PROGRAMAÇÃO CLP',
     color: '#22c55e',
-    desc: 'Ladder (ou diagrama de contatos) é a linguagem de programação mais utilizada em CLPs, baseada em diagramas de relés. No projeto, a lógica implementada verifica: SE temperatura ≥ 40°C ENTÃO aciona saída Q0.0 (AC) E Q0.1 (sirene). Segue a norma IEC 61131-3 de programação de CLPs.',
-    specs: ['Norma: IEC 61131-3', 'Tipo: Linguagem gráfica', 'Software: TIA Portal v17', 'Ciclo: < 1ms', 'Contatos: NO, NC, bobinas']
+    desc: 'Ladder (ou diagrama de contatos) é a linguagem de programação mais utilizada em CLPs, baseada em diagramas de relés. No projeto, a lógica implementada verifica: SE temperatura ≥ 40°C ENTÃO aciona saída Q0.0 (AC) E Q0.1 (sirene). Segue a norma IEC 61131-3 e é programada no software WPS (WEG Programming Suite).',
+    specs: ['Norma: IEC 61131-3', 'Tipo: Linguagem gráfica', 'Software: WPS (WEG)', 'Ciclo: < 1ms', 'Contatos: NO, NC, bobinas']
   }
 };
 
